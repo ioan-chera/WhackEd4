@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import sys
 
@@ -6,6 +7,18 @@ from setuptools import setup
 
 # Add src directory to Python path so py2app can find whacked4 module
 sys.path.insert(0, 'src')
+
+# Read version from whacked4.iss
+def get_version_from_iss():
+    """Read AppVersion from whacked4.iss [Setup] section."""
+    with open('whacked4.iss', 'r') as f:
+        content = f.read()
+        match = re.search(r'^\s*AppVersion\s*=\s*(.+?)\s*$', content, re.MULTILINE)
+        if match:
+            return match.group(1)
+    raise ValueError("Could not find AppVersion in whacked4.iss")
+
+APP_VERSION = get_version_from_iss()
 
 APP = ['src/main.py']
 DATA_FILES = [
@@ -23,8 +36,8 @@ OPTIONS = {
         'CFBundleName': os.environ.get('app_title', 'WhackEd4'),
         'CFBundleDisplayName': os.environ.get('app_title', 'WhackEd4'),
         'CFBundleIdentifier': f'com.teamhellspawn.{os.environ.get("app_name_lower", "whacked4")}',
-        'CFBundleVersion': os.environ.get('app_version_value', '1.3.3'),
-        'CFBundleShortVersionString': os.environ.get('app_version_value', '1.3.3'),
+        'CFBundleVersion': os.environ.get('app_version_value', APP_VERSION),
+        'CFBundleShortVersionString': os.environ.get('app_version_value', APP_VERSION),
         'CFBundleInfoDictionaryVersion': '6.0',
         'CFBundlePackageType': 'APPL',
         'NSHighResolutionCapable': True,
@@ -57,7 +70,7 @@ OPTIONS = {
 setup(
     app=APP,
     name=os.environ.get('app_title', 'WhackEd4'),
-    version=os.environ.get('app_version_value', '1.3.3'),
+    version=os.environ.get('app_version_value', APP_VERSION),
     description=os.environ.get('app_description', 'A DeHackEd editor for macOS'),
     data_files=DATA_FILES,
     options={'py2app': OPTIONS},
