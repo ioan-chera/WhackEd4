@@ -1,5 +1,7 @@
 import os
+import subprocess
 import sys
+
 from setuptools import setup
 
 # Add src directory to Python path so py2app can find whacked4 module
@@ -62,3 +64,24 @@ setup(
     setup_requires=['py2app'],
     install_requires=['pyaudio', 'wxPython', 'platformdirs']
 )
+
+# Clean up broken symbolic links after build
+
+if 'py2app' in sys.argv:
+    print("Cleaning up broken symbolic links...")
+    # Find and remove broken symlinks in the app bundle
+    try:
+        result = subprocess.run([
+            'find', 'dist/', '-type', 'l', '-exec', 'test', '!', '-e', '{}', ';',
+            '-print0'
+        ], capture_output=True, text=True)
+
+        if result.stdout:
+            broken_links = result.stdout.strip('\0').split('\0')
+            for link in broken_links:
+                if link and link.endswith('.pyo'):
+                    print(f"Removing broken symlink: {link}")
+                    os.unlink(link)
+    except Exception as e:
+        print(f"Warning: Could not clean up symlinks: {e}")
+    print("Cleanup complete.")
